@@ -27,4 +27,4 @@ j=f/n
 
 print("ゾロ目回数"+str(d)+"出現率"+str(g))
 print("リーチ回数"+str(e)+"出現率"+str(h))
-print("ノー点回数"+str(f)+"出現率"+str(j))
+print("目なし回数"+str(f)+"出現率"+str(j))
