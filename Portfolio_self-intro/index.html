@@ -7,6 +7,9 @@
     <title>福田のポートフォリオ</title>
     <!-- Bootstrap -->
     <link rel="stylesheet" href="https://bootswatch.com/3/sandstone/bootstrap.min.css">
+    <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+    <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+
     <style>
         body {
             padding-top: 50px;
@@ -19,9 +22,29 @@
 			background-color: white;
         }
 
+        h1  {
+            font-size: 250%;
+            margin: 30px;
+        }
+
+        h2  {
+            font-size: 200%;
+            margin: 30px;
+        }
+
         p  {
             font-size: 120%;
             margin: 30px;
+        }
+
+        canvas {
+            border: 1px solid #000;
+        }
+
+        .digital-clock, .timer, .stopwatch, .date {
+            font-size: 30px;
+            color: #000;
+            margin: 10px 0;
         }
     </style>
     <meta name="discription" content="2026卒就活用ポートフォリオ">
@@ -43,6 +66,7 @@
                     <ul class="nav navbar-nav">
                         <li class="active"><a href="#">Profile</a></li>
                         <li><a href="#Product">Product</a></li>
+                        <li><a href="#WebWatch">WebWatch</a></li>
                         <li><a href="#Skill">Skill</a></li>
                         <li><a href="#Link">Link</a></li>
                         <li><a href="#Contact">Contact</a></li>
@@ -72,6 +96,7 @@
                         <h1 id="Profile">Fukuda Kyotaro</h1>
                             <p>2004年 2月 23日生まれ 20歳</p>
                             <p>千葉工業大学 先進工学部 知能メディア工学科 在籍</p>
+                            <p>知的情報工学研究室所属</p>
                             <p>知識工学・メディア工学・デザインを学習</p>
                     </div>
                 </div>
@@ -183,7 +208,150 @@
                 <br>
                 <br>
                 <br>
-                
+                <div class="row">
+                    <h1 id="WebWatch">WebWatch</h1>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <h2>機能</h2>
+                                <p>1キー:タイマー</p>
+                                <p>2キー:スタート(ストップウォッチ)</p>
+                                <p>Sキー:ストップ(ストップウォッチ)</p>
+                                <p>Rキー:リセット・非表示(ストップウォッチ)</p>
+                                <p>3キー:表示・非表示(日付)</p>
+                                <p>4キー:表示・非表示(デジタル時計)</p>
+                            </div>
+                            <br>
+                            <br>
+                        <canvas id="clockCanvas" width="400" height="400"></canvas>
+                        <div class="digital-clock" id="digitalClock"></div>
+                        <div class="timer" id="timer"></div>
+                        <div class="stopwatch" id="stopwatch"></div>
+                        <div class="date" id="date"></div>
+
+                        <script>
+                            const canvas = document.getElementById('clockCanvas');
+                            const ctx = canvas.getContext('2d');
+                            const digitalClock = document.getElementById('digitalClock');
+                            const timerDisplay = document.getElementById('timer');
+                            const stopwatchDisplay = document.getElementById('stopwatch');
+                            const dateDisplay = document.getElementById('date');
+
+                            let timerRunning = false;
+                            let stopwatchRunning = false;
+                            let timerCount = 180;
+                            let stopwatchTime = 0;
+                            let mode = 'clock';
+                            let counter = 0;
+                            
+                            function drawClock() {
+                                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                                const now = new Date();
+                                const h = now.getHours();
+                                const m = now.getMinutes();
+                                const s = now.getSeconds();
+
+                                // 時計の描画
+                                ctx.beginPath();
+                                ctx.arc(200, 200, 180, 0, Math.PI * 2);
+                                ctx.fillStyle = "#87CEEB";
+                                ctx.fill();
+                                ctx.stroke();
+
+                                for (let i = 0; i < 60; i++) {
+                                    const angle = (i * Math.PI) / 30;
+                                    const x1 = 200 + Math.cos(angle) * 150;
+                                    const y1 = 200 + Math.sin(angle) * 150;
+                                    const x2 = 200 + Math.cos(angle) * 170;
+                                    const y2 = 200 + Math.sin(angle) * 170;
+
+                                    ctx.lineWidth = (i % 15 === 0) ? 4 : (i % 5 === 0) ? 2 : 1;
+                                    ctx.strokeStyle = "#000";
+                                    ctx.beginPath();
+                                    ctx.moveTo(x1, y1);
+                                    ctx.lineTo(x2, y2);
+                                    ctx.stroke();
+                                }
+
+                                // 時計の針
+                                drawHand(200, 200, 70, (h % 12) * 30 + m * 0.5);
+                                drawHand(200, 200, 100, m * 6);
+                                drawHand(200, 200, 120, s * 6, 'red');
+
+                                digitalClock.textContent = now.toLocaleTimeString();
+                                dateDisplay.textContent = now.toLocaleDateString();
+
+                                requestAnimationFrame(drawClock);
+                            }
+
+                            function drawHand(x, y, length, angle, color = '#000') {
+                                const rad = (Math.PI / 180) * (angle - 90);
+                                ctx.strokeStyle = color;
+                                ctx.lineWidth = 8;
+                                ctx.beginPath();
+                                ctx.moveTo(x, y);
+                                ctx.lineTo(x + length * Math.cos(rad), y + length * Math.sin(rad));
+                                ctx.stroke();
+                            }
+
+                            function updateTimer() {
+                                if (timerRunning) {
+                                    if (timerCount > 0) {
+                                        timerDisplay.textContent = `Timer: ${timerCount}`;
+                                        timerCount--;
+                                        setTimeout(updateTimer, 1000);
+                                    } else {
+                                        timerRunning = false;
+                                        timerDisplay.textContent = '';
+                                    }
+                                }
+                            }
+
+                            function updateStopwatch() {
+                                if (stopwatchRunning) {
+                                    stopwatchTime++;
+                                    const minutes = Math.floor(stopwatchTime / 60);
+                                    const seconds = stopwatchTime % 60;
+                                    stopwatchDisplay.textContent = `Stopwatch: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                                    setTimeout(updateStopwatch, 1000);
+                                }
+                            }
+
+                            document.addEventListener('keydown', (event) => {
+                                if (event.key === '1') {
+                                    mode = 'timer';
+                                    timerRunning = true;
+                                    updateTimer();
+                                } else if (event.key === '2') {
+                                    stopwatchRunning = true;
+                                    updateStopwatch();
+                                } else if (event.key === 's') {
+                                    stopwatchRunning = false;
+                                } else if (event.key === 'r') {
+                                    stopwatchRunning = false;
+                                    stopwatchTime = 0;
+                                    stopwatchDisplay.textContent = '';
+                                } else if (event.key === '3') {
+                                    // Toggle date display
+                                    dateDisplay.style.display = dateDisplay.style.display === 'none' ? 'block' : 'none';
+                                } else if (event.key === '4') {
+                                    // Toggle digital clock display
+                                    digitalClock.style.display = digitalClock.style.display === 'none' ? 'block' : 'none';
+                                } else if (event.key === 'c') {
+                                    counter++;
+                                    loadCharacter();
+                                }
+                            });
+                            drawClock();
+                        </script>
+                <!DOCTYPE html>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
             </div>
                 
             <div class="row">
@@ -194,9 +362,13 @@
                         <li>Swift</li>
                         <li>R</li>
                         <li>MATLAB</li>
+                        <li>HTML</li>
+                        <li>Kotlin</li>
+                        <li>Solidity</li>
                         <li>Autodesk Fusion 360</li>
                         <li>Adobe Illustrator</li>
                         <li>Adobe Photoshop</li>
+                        <li>Figma</li>
                     </ul>
                 </div>
             </div>
